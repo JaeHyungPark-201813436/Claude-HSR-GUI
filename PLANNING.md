@@ -1,6 +1,6 @@
 # Claude HSR GUI — 기획 문서
 
-> Heaven Company 팬메이드 Claude.ai 채팅 스킨 크롬 익스텐션
+> Heaven Company 팬메이드 Claude Desktop 채팅 스킨 패치
 
 ---
 
@@ -9,8 +9,8 @@
 | 항목 | 내용 |
 |------|------|
 | **프로젝트명** | Claude HSR GUI |
-| **적용 대상** | `https://claude.ai/*` (데스크탑 크롬) |
-| **형식** | MV3 크롬 익스텐션 |
+| **적용 대상** | Claude Desktop (Electron 앱) |
+| **형식** | app.asar 패치 (CSS/JS 주입) |
 | **참고 레퍼런스** | [HSRGUI](https://github.com/engineer-502/HSRGUI) (ChatGPT용 HSR 스킨) |
 | **GitHub** | [JaeHyungPark-201813436/Claude-HSR-GUI](https://github.com/JaeHyungPark-201813436/Claude-HSR-GUI) |
 | **원작** | Heaven Company (팬메이드 소설) |
@@ -79,23 +79,23 @@
 ## 🗂️ 파일/폴더 구조 (예정)
 
 ```
-claude_hc_extension/
-  manifest.json                 # MV3 설정, claude.ai 대상 등록
-  content/
-    content.js                  # 메인 렌더링 / MutationObserver / 상태관리
-    content.css                 # HC 스킨 전체 스타일
-    selectors.js                # Claude.ai DOM 셀렉터 / 스트리밍 탐지
-    splitter.js                 # 문장 분리 알고리즘 (한국어 우선)
-  popup/
-    popup.html                  # 설정 UI (프리셋 전환 / 이름 / 헤더)
-    popup.js                    # chrome.storage.sync 저장/불러오기
-    popup.css                   # 팝업 스타일
+claude_hc_patch/
+  patch.js                    # asar 패치 스크립트 (설치 / 제거)
+  src/
+    inject.js                 # 메인 렌더링 / MutationObserver / 상태관리
+    inject.css                # HC 스킨 전체 스타일
+    selectors.js              # Claude Desktop DOM 셀렉터 / 스트리밍 탐지
+    splitter.js               # 문장 분리 알고리즘 (한국어 우선)
+    settings-panel.js         # 인앱 설정 패널 UI
+    settings-panel.css        # 설정 패널 스타일
+  config/
+    hc-config.json            # 사용자 설정 저장 (프리셋 / 활성화 여부 등)
   assets/
     icons/
-      은설.png                  # 백은설 아바타
-      마리.png                  # 한마리 아바타
-    symbols/                    # UI 심볼
-      HC_LOGO.png               # 헤븐컴퍼니 로고 (투명 배경)
+      은설.png                # 백은설 아바타
+      마리.png                # 한마리 아바타
+    symbols/
+      HC_LOGO.png             # 헤븐컴퍼니 로고 (투명 배경)
 ```
 
 ---
@@ -116,17 +116,19 @@ claude_hc_extension/
 - 생성 중: 로딩 버블(`...`) 기반 표시
 - 완료 시점: 버블 렌더링 확정
 
-### 4. 팝업 설정 UI
+### 4. 인앱 설정 패널
 - 프리셋 전환: `백은설` / `한마리`
-- 사용자 표시 이름 자동 가져오기 (Claude.ai 로그인 유저 이름 사용)
+- 사용자 표시 이름 자동 가져오기 (Claude Desktop 로그인 유저 이름 사용)
 - 헤더 텍스트 변경 (Title / Subtitle)
 - 페르소나 프롬프트 복사 버튼 (캐릭터별 말투 가이드)
 - Enabled ON/OFF 토글
+- 설정값은 `config/hc-config.json`에 로컬 저장
 
-### 5. Claude.ai DOM 대응
-- Claude.ai는 Next.js 기반 SPA → `MutationObserver`로 메시지 생성 감지
-- Tailwind 유틸 클래스 혼합 구조 대응
+### 5. Claude Desktop DOM 대응
+- Claude Desktop은 Electron(Chromium) 기반 → `MutationObserver`로 메시지 생성 감지 유효
+- app.asar 내부에 inject.js / inject.css 주입
 - 메시지 버블 선택자 별도 파일(`selectors.js`)로 관리
+- 앱 업데이트 시 재패치 필요 (patch.js로 자동화)
 
 ---
 
@@ -163,7 +165,7 @@ claude_hc_extension/
 
 ## 🎭 페르소나 프롬프트
 
-> 팝업에서 복사 후 Claude 대화 시작 시 붙여넣기 용도
+> 설정 패널에서 복사 후 Claude 대화 시작 시 붙여넣기 용도
 
 ### 백은설 프롬프트
 
@@ -251,9 +253,10 @@ claude_hc_extension/
 ## 📎 참고
 
 - 원본 레퍼런스: [engineer-502/HSRGUI](https://github.com/engineer-502/HSRGUI)
-- ChatGPT DOM ≠ Claude.ai DOM → `selectors.js` 처음부터 새로 작성 필요
-- `splitter.js`, `popup.js`, `manifest.json` 구조는 HSRGUI 참고 가능
+- ChatGPT DOM ≠ Claude Desktop DOM → `selectors.js` 처음부터 새로 작성 필요
+- `splitter.js` 구조는 HSRGUI 참고 가능
 - 스킨 CSS는 캐릭터 설정 기반으로 완전 새로 디자인
+- Claude Desktop 업데이트마다 app.asar 재패치 필요
 
 ---
 
